@@ -1,0 +1,878 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html" charset="utf-8" />
+  <title>Index</title>
+  <script language="javascript" type="text/javascript" src="./Board.js"></script>
+  <script language="javascript" type="text/javascript" src="./jquery-3.4.1.min.js">
+  </script>
+  <script>
+
+    jQuery.base64 = (function($) {
+
+      var _PADCHAR = "=",
+      _ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+      _VERSION = "1.0";
+
+
+      function _getbyte64(s, i) {
+            // This is oddly fast, except on Chrome/V8.
+            // Minimal or no improvement in performance by using a
+            // object with properties mapping chars to value (eg. 'A': 0)
+
+            var idx = _ALPHA.indexOf(s.charAt(i));
+
+            if (idx === -1) {
+              throw "Cannot decode base64";
+            }
+
+            return idx;
+          }
+          function _decode(s) {
+            let push = function(t, c) {
+              let invert_from_64 = [
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 0,
+              0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+              0, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+              25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 0, 0, 0, 0, 62,
+              0, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+              51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0
+              ];
+              t.t = t.t << 6;
+              t.t += invert_from_64[127 & c.charCodeAt(0)]; 
+              //console.log(t.t, c, c.charCodeAt(0));
+            }
+            let pop = function(t) {
+              let c = t.t & 255;
+              t.t >>= 8;
+              return c;
+            }
+            let idx = 0;
+            let ot = [];
+            let M = s.length;
+            //console.log(s);
+            //console.log(parseInt(M / 4));
+            for (var c = parseInt(M / 4); c; --c, idx += 4) {
+              let t = { t: 0 };
+              push(t, s[idx + 3]);
+              push(t, s[idx + 2]);
+              push(t, s[idx + 1]);
+              push(t, s[idx + 0]);
+              ot.push(pop(t));
+              ot.push(pop(t));
+              ot.push(pop(t));
+            }
+            //std::uint32_t t(0);
+            let t = { t: 0 };
+            switch (M % 4) {
+              case 3:
+              push(t, s[idx + 2]);
+              case 2:
+              push(t, s[idx + 1]);
+              case 1:
+              push(t, s[idx + 0]);
+            }
+            switch (M % 4) {
+              case 3:
+              ot.push(pop(t));
+              case 2:
+              ot.push(pop(t));
+            } 
+            return ot;
+          }
+
+
+          function _getbyte(s, i) {
+            var x = s.charCodeAt(i);
+
+            if (x > 255) {
+              throw "INVALID_CHARACTER_ERR: DOM Exception 5";
+            }
+
+            return x;
+          }
+
+
+          function _encode(s) {
+            if (arguments.length !== 1) {
+              throw "SyntaxError: exactly one argument required";
+            }
+            s = String(s);
+
+            var i,
+            b10,
+            x = [],
+            imax = s.length - s.length % 3;
+
+            if (s.length === 0) {
+              return s;
+            }
+
+            for (i = 0; i < imax; i += 3) {
+              b10 = (_getbyte(s, i) << 16) | (_getbyte(s, i + 1) << 8) | _getbyte(s, i + 2);
+              x.push(_ALPHA.charAt(b10 >> 18));
+              x.push(_ALPHA.charAt((b10 >> 12) & 0x3F));
+              x.push(_ALPHA.charAt((b10 >> 6) & 0x3f));
+              x.push(_ALPHA.charAt(b10 & 0x3f));
+            }
+
+            switch (s.length - imax) {
+              case 1:
+              b10 = _getbyte(s, i) << 16;
+              x.push(_ALPHA.charAt(b10 >> 18) + _ALPHA.charAt((b10 >> 12) & 0x3F) + _PADCHAR + _PADCHAR);
+              break;
+
+              case 2:
+              b10 = (_getbyte(s, i) << 16) | (_getbyte(s, i + 1) << 8);
+              x.push(_ALPHA.charAt(b10 >> 18) + _ALPHA.charAt((b10 >> 12) & 0x3F) + _ALPHA.charAt((b10 >> 6) & 0x3f) + _PADCHAR);
+              break;
+            }
+
+            return x.join("");
+          }
+
+
+          return {
+            decode: _decode,
+            encode: _encode,
+            VERSION: _VERSION
+          };
+
+        }(jQuery));
+    
+    const delay = (interval) => {
+      return new Promise((resolve) => {
+        setTimeout(resolve, interval);
+      });
+    };
+
+    /*
+    async () => {
+          console.log('wait 5 sec');
+          await delay(5000);
+          console.log('Done after five seconds')
+        };
+    */
+    var p1 = new Promise((resolve, reject) => {
+      //console.log('Initial Promise');
+      resolve();
+    });
+
+    var board = new BaseBoard();
+    function Connect(str) {
+      try {
+        var wsstr = "ws://" + document.getElementById('Ip').value
+        + ":" + document.getElementById('Port').value;
+        board.socket = new WebSocket(wsstr);
+      } catch (e) {
+        alert('error');
+        return;
+      }
+      board.socket.onopen = sOpen;
+      board.socket.onerror = sError;
+      board.socket.onmessage = sMessage;
+      board.socket.onclose = sClose;
+    }
+    function new_board(){
+      let socket = board.socket;
+      board = null;
+      document.body.innerHTML="";
+      board = new CDCBoard();
+      board.socket = socket;
+      window = board;
+      //console.log("new_board finish");
+      var s = String("initial_board_finish");
+      //console.log(s, board.socket);
+      board.socket.send(s);
+    }
+
+    function sOpen() {
+      console.log("connect success!");
+      //alert('connect success!');
+      //console.log("websocket open", board.socket.readyState);
+    }
+    function sError(e) {
+      //alert("error " + e);
+      console.log("ERROR sError" + e);
+    }
+    var midstr = new Array();
+    function sMessage(e) {
+      //console.log(e.data.length, e.data, board.socket);
+      if(e.data.match(',') != null )
+      {   
+        var arr = new Array();
+        arr = e.data.split(",");
+        arr.shift();
+        midstr = arr;
+        MidHandler(midstr);
+      }
+      else{
+        Recv(e.data);
+      }
+    }
+
+    
+    function sClose(e) {
+      //alert("connect closed:" + e.code);
+      console.log("connect closed:" + e.code, board.socket);
+    }
+    /* Mid board
+     * ex:
+     *  3,a5(k),a4(G),a5-a4
+     *  Recv("flip a5(k)")
+     *  Recv("flip a4(G)")
+     *  Recv("move a5-a4")
+     *  Recv function set board
+     */
+    function MidHandler(arr){
+      for( var i = 0; i < arr.length; i++ ){
+        switch(arr[i][2]){
+          case '(':
+            Recv("flip " + arr[i]);
+          break;
+          case '-':
+            Recv("move " + arr[i]);
+          break;
+        }
+      }
+    }
+    /* open or die piece
+     * flip
+     *  open black or red piece
+     *  PCE_QUA 
+     */
+    function Die_pie(pie, act, type){
+      var val = null;
+      var diep = null;
+
+      switch(act){
+        case "flip":
+          //console.log("flip");
+          val = board.PCE_QUA.get(pie);
+          val = val + 1;
+          diep = document.getElementById(pie + val);
+          diep.firstElementChild.className = type;
+          board.PCE_QUA.set(pie, val);
+        break;
+        case "move":
+          val = board.PCE_DIE.get(pie);
+          val = val + 1;
+          diep = document.getElementById(pie + val);
+          diep.firstElementChild.className = type;
+          board.PCE_DIE.set(pie, val);
+        break;
+      }
+      return;
+    }
+    function remove_rect(){
+      board.remove_div("blue_rect");
+      board.remove_div("orange_rect");
+      var arow = document.getElementById("arrow");
+      if( arow != null ){arow.remove();}
+    }
+    function add_prompt(){
+      if(document.getElementById("prompt_t")!=null){
+        return;
+      }
+      var bget = board.div_endgame_movelist;
+      var div = board.new_div("prompt_t");
+      var style = "width:250px;";
+      style += "height:250px;";
+      style += "color:blue;";
+      style += "padding:10px;";
+      style += "position: relative;";
+      style += "font-size:35px;";
+      div.setAttribute("style", style);
+      bget.appendChild(div);
+    }
+    function remove_px(text){
+      var str = text.split('px');
+      return parseInt(str[0]);
+    }
+    function Recv(str){
+      remove_byId("prompt_t", true);
+      remove_byId("box_dialog", false);
+      let ele1 = document.getElementsByClassName("blue_rect");
+      let ele2 = document.getElementsByClassName("orange_rect");
+      //console.log("Recv:", str);
+      var arr = new Array();
+      arr = str.split(" ");
+      let prompt = document.getElementById("prompt_t");
+      //console.log("Recv:", arr);
+      switch(arr[0]){
+        case "CDC":
+          p1.then(() => {
+              new_board();
+            })
+            .then(()=>{
+              add_prompt();
+              board.mode = 1;
+            })
+            .catch(() => {
+              console.log('new port error.');
+            });
+          
+        break;
+        case "port":
+          p1.then(()=>{
+            if( board.socket != null ){
+              //console.log("Connect close:", board.socket);
+              Close();
+              board.socket = null;
+              //console.log("new socket " + arr[1]);
+            }
+            })
+            .then(() => {
+              Connect("ws://127.0.0.1:" + arr[1]);
+              //console.log("ws://127.0.0.1:" + arr[1]);
+            })
+            .catch(() => {
+              console.log('new port error.');
+            });
+        break;
+        case "reset_board":
+          var s = board.socket;
+          board = null;
+          document.body.innerHTML="";
+          board = new CDCBoard();
+          board.socket = s;
+          board.mode = 1;
+          window = board;
+          add_prompt();
+          console.clear();
+          //console.log("reset_board", board);
+        break;
+        case "exit":
+          window.close();
+        break;
+        case "result":
+          var result = document.createElement("span");
+          var reason = document.createElement("span");
+          result.textContent = arr[1].replace(/_/g, " ");
+          reason.textContent = arr[2];
+          var style = "display: block;";
+          style += "width: 100%;";
+          result.setAttribute("style", style);
+          reason.setAttribute("style", style);
+          prompt.appendChild(result);
+          prompt.appendChild(reason);
+        break;
+        case "drawOffer":
+          if( arr[1] == "0" ){alert("對方不同意");}
+          else{
+            //true agree 1 false disagree 0
+            //console.log("case drawOffer");
+            creat_confirm("對方提和", "對方提和，請問你要同意嗎?", "同意", "不同意", "askdrawOffer");
+          }
+        break;
+        case "abort":
+          //true abort 1, false not abort 0
+          if( arr[1] == "0" ){alert("無法使用此功能");}
+          else{
+            //console.log("abort");
+            //console.log(board.player);
+            abort_init(board.player);
+          }
+        break;
+        case "genmove":
+          board.turn = 1;
+          var content = document.createElement("span");
+          var btnd = document.createElement("button");
+          var btnr = document.createElement("button");
+          var stop = document.createElement("button");
+          content.textContent = "Your turn.";
+          var style = "display: block;";
+          style += "width: 100%;";
+          if( arr[1] != "unknow"){style += "color: " + arr[1] + ";";}
+          else{ style += "color: blue;";}
+          content.setAttribute("style", style);
+          style = "margin-right: 10px;";
+          btnd.setAttribute("style", style);
+          btnr.setAttribute("style", style);
+          btnd.onclick = click_drawOffer;
+          btnr.onclick = click_resign;
+          stop.onclick = click_set;
+          btnd.append("提和");
+          btnr.append("認負");
+          stop.append("ABORT");
+          prompt.appendChild(content);
+          prompt.appendChild(btnd);
+          prompt.appendChild(btnr);
+          prompt.appendChild(stop);
+        break;
+        case "flip":
+          board.actlist.push(str);
+          if( ele1.length > 0 || ele2.length > 0 ){remove_rect();}
+          let getstr = "" + arr[1][0] + "_" + arr[1][1];
+          let recvblank = document.getElementById(getstr);
+          if( board.player == 0 )
+          {
+            board.clr = (board.PCE_MAP[arr[1][3]].clr == "RED"? 0: 1);
+            //console.log("player", board.player);
+          }
+          var t = board.PCE_MAP[arr[1][3]].ch;
+          //console.log(recvblank);
+          if( recvblank.hasChildNodes() ){
+            recvblank.firstElementChild.style.backgroundColor = "#a5a4a4";
+            recvblank.firstElementChild.firstElementChild.append(t);
+          }
+          if( arr[1][3].match(/([a-z])+/) )
+          {
+            recvblank.firstElementChild.firstElementChild.className = "piece_black";
+            Die_pie(arr[1][3], "flip", "piece_black");
+          }
+          else if( arr[1][3].match(/([A-Z])+/) )
+          {
+            recvblank.firstElementChild.firstElementChild.className = "piece_red";
+            Die_pie(arr[1][3], "flip", "piece_red");
+          }   
+          board.tmp = null;
+          add_path(arr[1]);
+          var div = document.createElement("div");
+          div.className = "blue_rect";
+          div.style.cssText = "width: 38px";
+          div.style.cssText += "height: 38px";
+          div.style.cssText += "top: 0.7px";
+          div.style.cssText += "left: 0.7px";
+          recvblank.append(div);
+          //console.log(div);
+          board.div_path.scrollTop = board.div_path.scrollHeight;
+          board.player++;
+        break;
+        case "move":
+          board.actlist.push(str);
+          if( ele1.length > 0 || ele2.length > 0 ){remove_rect();}
+          var stanum = ((arr[1][0].charCodeAt() - 'a'.charCodeAt()) * 8) 
+          + (arr[1][1].charCodeAt() - '0'.charCodeAt());
+          var tarnum = ((arr[1][3].charCodeAt() - 'a'.charCodeAt()) * 8) 
+          + (arr[1][4].charCodeAt() - '0'.charCodeAt());
+          var tarid = "" + arr[1][3] + "_" + arr[1][4];
+          var tar = document.getElementById(tarid);
+          var staid = "" + arr[1][0] + "_" + arr[1][1];
+          var sta = document.getElementById(staid);
+          //console.log(tar.chileNodes.length);
+          var pie = sta.firstElementChild;
+          var dpie = null;
+          if( tar.hasChildNodes() ){   
+            dpie = tar.firstElementChild;
+          }
+          while (sta.firstChild) {
+            sta.removeChild(sta.firstChild);
+          }
+          while (tar.firstChild) {
+            tar.removeChild(tar.firstChild);
+          }
+          // arrow //
+          var set_top = 0;
+          var set_left = 0;
+          var w = 0;
+          var h = 0;
+          var k = stanum - tarnum;
+          var arrow_class = "";
+          switch(true){
+            case (k >= 1 && k <= 7):
+              arrow_class = "d_arrow";
+              w = 1;
+              h = k;
+              set_top = remove_px(sta.style.top) + 20;
+              set_left = remove_px(sta.style.left);
+            break;
+            case (k >= -7 && k <= -1):
+              arrow_class = "u_arrow";
+              w = 1;
+              h = Math.abs(k);
+              set_top = remove_px(tar.style.top) + 20;
+              set_left = remove_px(tar.style.left);
+            break;
+            case (k >= 8 && k <= 24):
+              arrow_class = "l_arrow";
+              w = ( k / 8 );
+              h = 1;
+              set_top = remove_px(tar.style.top);
+              set_left = remove_px(tar.style.left) + 20;
+            break;
+            case (k >= -24 && k <= -8):
+              arrow_class = "r_arrow";
+              w = ( Math.abs(k) / 8 );
+              h = 1;
+              set_top = remove_px(sta.style.top);
+              set_left = remove_px(sta.style.left) + 20;
+            break;
+          }
+          // arrow end //
+          var div = document.createElement("div");
+          div.id = "arrow";
+          div.className = arrow_class;
+          div.style.cssText = "width: " + (w * 40) + "px";
+          div.style.cssText += "height: " + (h * 40) + "px";
+          div.style.cssText += "top: "+ set_top +"px";
+          div.style.cssText += "left: "+ set_left +"px";
+          var pie_board = document.getElementById("div_piece_CDC");
+          pie_board.append(div);
+          //console.log(div);
+          div = null;
+          div = document.createElement("div");
+          div.className = "orange_rect";
+          div.style.cssText = "width: 38px";
+          div.style.cssText += "height: 38px";
+          div.style.cssText += "top: 0.7px";
+          div.style.cssText += "left: 0.7px";
+          tar.append(div);
+          //console.log(div);
+          tar.appendChild(pie);
+          if( dpie != null && dpie.hasChildNodes() == true ){ 
+            var dtext = dpie.firstElementChild.textContent;
+            var pieen = null;
+            for( k in board.PCE_MAP){
+              if(board.PCE_MAP[k].ch == dtext){
+                pieen = board.PCE_MAP[k].en;
+                Die_pie(pieen, "move", "piece_dark");
+                break;
+              }
+            }
+          }
+          board.tmp = null;
+          board.after_blank = null;
+          board.remove_div("rect");
+          add_path(arr[1]);
+          board.player++;
+          board.div_path.scrollTop = board.div_path.scrollHeight;
+        break;
+      }
+      //console.log("color ", board.clr);
+     
+      //remove_confirm();
+    }
+    function add_path( text ){
+      board.div_path.append(
+        board.new_movelist_move(board.player, board.player % 2, 
+          "move" + ((board.clr + board.player) % 2 + 1), text)
+        );
+    }
+    function Close() {
+      board.socket.close();
+    }
+    function click_drawOffer(){
+      let box = document.getElementById("box_dialog");
+      if( box == null ){
+        creat_confirm("提和", "請問你確定要提和嗎?", "是", "否", "drawOffer");
+      }
+    }
+    function click_resign(){
+      let box = document.getElementById("box_dialog");
+      if( box == null ){
+        creat_confirm("認負", "請問你確定要認負嗎?", "是", "否", "resign");
+      }
+    }
+    function click_set(){
+      let box = document.getElementById("box_dialog");
+      if( box == null ){
+        creat_confirm("中止", "請問你確定要中止嗎?", "是", "否", "abort");
+      }
+    }
+    /* Confirm div
+     *
+     * box_dialog <- div 
+     *   box_content <- div
+     *     box_header <- div
+     *       title <- h4 text class = box_title
+     *     box_body <- div
+     *       content <- p text
+     *     box_foorer <- div
+     *       no  <- button
+     *       yes <- button
+     *
+     * resign, drawOffer <- my turn
+     *  yes send resign or drawOffer
+     *  no  close confirm
+     *
+     * askdrawOffer <- opp turn
+     *  yes send drawOffer 1
+     *  no  send drawOffer 0
+     */
+    function creat_confirm( title, content, yes, no, qus){
+      
+      var div_doc = document.createElement("div");
+      div_doc.id = "box_dialog";
+      div_doc.className = "box_dialog"
+      div_doc.setAttribute("role", "document");
+    
+      var div_content = document.createElement("div");
+      div_content.className = "box_content";
+      
+      var div_head = document.createElement("div");
+      div_head.className = "box_header";
+
+      var div_title = document.createElement("h4");
+      div_title.className = "box_title";
+      div_title.append(title);
+
+      var div_p = document.createElement("p");
+      var div_body = document.createElement("div");
+      div_body.className = "box_body";
+      div_p.append(content);
+      div_body.appendChild(div_p);
+
+      var div_footer = document.createElement("div");
+      div_footer.className = "box_footer"
+
+      var btn_y = document.createElement("button");
+      btn_y.className = "but_yes";
+      btn_y.append(yes);
+
+      var btn_n = document.createElement("button");
+      btn_n.className = "but_no";
+      btn_n.append(no);
+      
+      div_footer.appendChild(btn_n);
+      div_footer.appendChild(btn_y);
+
+      div_head.appendChild(div_title);
+      div_content.appendChild(div_head);
+      div_content.appendChild(div_body);
+      div_content.appendChild(div_footer);
+      div_doc.appendChild(div_content);
+
+      let prompt = document.getElementById("prompt_t");
+      prompt.appendChild(div_doc);
+      //console.log(board.socket.send);
+      btn_y.onclick = function(){
+        if( qus == "askdrawOffer"){
+          //console.log("send drawOffer 1");
+          //console.log(board.socket.send);
+          board.socket.send("drawOffer 1");
+        }else if( qus == "abort" ){
+          //console.log("send ", qus);
+          //console.log(board.socket.send);
+          board.socket.send(qus);
+        }else{
+          //console.log("send ", qus);
+          board.socket.send(qus);
+        }
+        remove_byId("box_dialog", false);
+      }
+      btn_n.onclick = function(){
+        if( qus == "askdrawOffer"){
+          //console.log("send drawOffer 0");
+          board.socket.send("drawOffer 0");
+        }
+        remove_byId("box_dialog", false);
+      }
+    }
+    // abort is true, board init
+    function abort_init(index){
+      //console.log(board.socket.send);
+      let clr = board.clr;
+      let buf = board.actlist;
+      
+      document.body.innerHTML="";
+      var sock = board.socket;
+      board = null;
+      board = new CDCBoard();
+      board.socket = sock;
+      sock = null;
+      add_prompt();
+      board.mode = 2;
+      board.clr = clr;
+      //console.log(buf);
+      for( let i = 0; i < buf.length; i++ ){
+        Recv(buf[i]);
+      }
+
+      DEBUG_SET("設定盤面", "雙方是否交換顏色?", board.player, "no");
+      let path = document.getElementById("div_movelist_CDC").lastChild;
+      path.lastChild.click();
+      //console.log(board.mode);
+      window = board;
+    }
+    // remove confirm box
+    /*function remove_confirm(){
+      let conf = document.getElementById("box_dialog");
+      if( conf != null ){conf.remove();}
+    }
+    // div prompt remove all child
+    
+    function remove_prompt(){
+      let prom = document.getElementById("prompt_t");
+      if( prom == null ){
+        return;
+      }
+      while( prom.firstChild ){prom.removeChild(prom.firstChild);}
+    }*/
+
+    function remove_byId(id, child){
+      let ele = document.getElementById(id);
+      if( child == true ){
+        if( ele == null ){
+        return;
+        }
+        while( ele.firstChild ){ele.removeChild(ele.firstChild);}
+      }else{
+        if( ele != null ){ele.remove();}
+      }
+    }
+    function DEBUG_SET( title, content, text_step, swap){
+      //body
+      var div_doc = document.createElement("div");
+      div_doc.id = "box_dialog";
+      div_doc.className = "box_dialog"
+      div_doc.setAttribute("role", "document");
+
+      var div_content = document.createElement("div");
+      div_content.className = "box_content";
+      
+      //title
+      var div_head = document.createElement("div");
+      div_head.className = "box_header";
+
+      var div_title = document.createElement("h4");
+      div_title.className = "box_title";
+      div_title.append(title);
+
+      //content
+      var style = "";
+      style += "font-size: 18px;";
+      style += "color: black;";
+      var div_body = document.createElement("div");
+      div_body.className = "box_body";
+
+      var div_p = document.createElement("p");
+      var div_blank = document.createElement("p");
+
+      var div_y = document.createElement("span");
+      var div_n = document.createElement("span");
+
+      var div_step = document.createElement("span");
+      var text_box = document.createElement("input");
+
+      var r1 = document.createElement("input");
+      var r2 = document.createElement("input");
+
+      div_p.setAttribute("style", style);
+      div_y.setAttribute("style", style);
+      div_n.setAttribute("style", style);
+      div_step.setAttribute("style", style);
+
+      div_y.textContent = "是";
+      div_n.textContent = "否";
+
+      r1.id = "radio_1";
+      r1.type = "radio";  
+      r1.name = "swap";
+      r1.value = "yes";
+      style = "width: 50px;";
+      style += "text-align: left;";
+      r1.setAttribute("style", style);
+      div_y.insertBefore(r1, div_y.firstChild);
+
+      r2.type = "radio";
+      r2.name = "swap";
+      r2.value = "no";
+      r2.setAttribute("style", style);
+      div_n.insertBefore(r2, div_n.firstChild);
+
+      if( swap == "yes" ){
+        r1.checked = true;
+      }else{
+        r2.checked = true;
+      }
+
+      style = "width: 40px;";
+      text_box.id = "abort_step";
+      text_box.type = "text";
+      text_box.value = text_step;
+      text_box.min = 1;
+      text_box.max = board.player;
+      text_box.setAttribute("style", style);
+
+
+      div_p.append(content);
+      div_step.append("設定回到第");
+      div_step.append(text_box);
+      div_step.append("步");
+      
+      div_body.appendChild(div_p);
+      div_body.appendChild(div_y);
+      div_body.appendChild(div_n);
+      div_body.appendChild(div_blank);
+      div_body.appendChild(div_step);
+
+      // footer
+      style = "margin-right: 10px;";
+      var div_footer = document.createElement("div");
+      div_footer.className = "box_footer";
+      //div_footer.setAttribute("style", style);
+
+      var btn_y = document.createElement("button");
+      var btn_n = document.createElement("button");
+      
+      btn_y.append("送出");
+      btn_n.append("重置");
+
+      btn_y.setAttribute("style", style);
+      btn_n.setAttribute("style", style);
+
+      div_footer.appendChild(btn_y);
+      div_footer.appendChild(btn_n);
+
+      div_head.appendChild(div_title);
+      div_content.appendChild(div_head);
+      div_content.appendChild(div_body);
+      div_content.appendChild(div_footer);
+      div_doc.appendChild(div_content);
+
+      let prompt = document.getElementById("prompt_t");
+      prompt.appendChild(div_doc);
+
+      //submit confirm
+      btn_y.onclick = function(){
+        //console.log("send: abort ", text_box.value);
+        var str = "undo ";
+        //console.log(/[^\d]/.test(text_box.value), text_box.value);
+        if( /[^\d]/.test(text_box.value) == true ){
+          alert("輸入錯誤，請重新輸入");
+          //console.log("int");
+          return;
+        }
+        else{
+          //console.log(board.player);
+          if( parseInt(text_box.value) < 0 && parseInt(text_box.value) > board.player ){
+            alert("輸入錯誤，請重新輸入");
+            //console.log("< 0 || > ply");
+            return;
+          }
+          if( r1.checked == true ){
+            str += String(text_box.value) + " 1";
+            board.socket.send(str);
+          }
+          else if( r2.checked == true ){
+            str += String(text_box.value) + " 0";
+            //console.log(str);
+            board.socket.send(str);
+          }
+          remove_byId("box_dialog", false);
+        } 
+      }
+      //clear confirm
+      btn_n.onclick = function(){
+        remove_byId("box_dialog", false);
+        let path = document.getElementsByClassName("path")[0].lastChild;
+        path.click();
+      }
+    }
+    //console.log($.base64.decode(".HNqV9VEALdBFlznlFcUhn8dSmLMCa1haAAbRI00iG6JaZ8jyWAVyIykKl7.v8PUCJaqvgC54IpmZ78z3pEtohDLa4LYHkyq9AP896soif8GAWqMI4me0ErYAi44AG70nXG6gCBCZjEMe2dExDxQ016Ie15AO1o_mDMAXW6Onb6iecRixFVknk.yv6x_pdB"));
+    
+    //window.onload = Connect('ws://127.0.0.1:2222');
+  </script>
+</head>
+
+<body>
+請輸入IP:
+<input id="Ip" type="text" />
+PORT:
+<input id="Port" type="text" />
+<button onclick="Connect()">送出</button>
+</body>
+
+</html>
