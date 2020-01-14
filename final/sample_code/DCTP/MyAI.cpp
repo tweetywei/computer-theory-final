@@ -42,6 +42,8 @@ bool MyAI::list_commands(const char* data[], char* response){
 
 bool MyAI::quit(const char* data[], char* response){
   fprintf(stderr, "Bye\n"); 
+  fflush(stderr);
+
 	return 0;
 }
 
@@ -116,6 +118,8 @@ bool MyAI::time_left(const char* data[], char* response){
 		sscanf(data[1], "%d", &(this->Black_Time));
 	}
 	fprintf(stderr, "Time Left(%s): %s\n", data[0], data[1]); 
+	fflush(stdout);
+
 	return 0;
 }
 

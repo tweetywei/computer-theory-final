@@ -56,6 +56,8 @@ int main(){
     // read command
     fgets(read, 1024, stdin);
     fprintf(stderr, "%s", read);
+    fflush(stderr);
+
     // remove newline(\n)
     read[strlen(read) - 1] = '\0';
     // get command id

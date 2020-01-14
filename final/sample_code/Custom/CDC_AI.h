@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <algorithm>
 #include "MyAI.h"
 class CDC_AI
 {
@@ -19,25 +20,6 @@ class CDC_AI
 public:
 	CDC_AI(void);
 	~CDC_AI(void);
-	struct n_b{
-	bool inside; // 1 if in the board
-	bool empty; // whether it is empty
-	bool dark; // whether it is dark
-	int color; // 0 or 1
-	char piece;
-	} board[(4+2)*(8+2)];
-
-	struct pl{
-	int where;
-	int piece_type;
-	} plist[2][16];
-
-	int Color;  //0R 1B 2Undefined
-	int dark_list[2][7]; //[color][chess_type] = the number of dark chess with chess_type and the color 
-	int num_pieces[2]; // number of revealed and alive pieces
-	bool can_eat_by_move[16][16];
-	void initBoardState();
-	void initCanEatList();
 
 
 	// commands
@@ -60,13 +42,37 @@ public:
 	bool time_left(const char* data[], char* response);// 16
 	bool showboard(const char* data[], char* response);// 17
 
-	void generateMove(char move[6]);
+	void generateMove(char move[6], int turn);
 	void MakeMove(const char move[6]);
+	void MakeMove(int move_int_rep);
 
 private:
+	struct n_b{
+	bool inside; // 1 if in the board
+	bool empty; // whether it is empty
+	bool dark; // whether it is dark
+	int color; // 0 or 1
+	char piece;
+	} board[(4+2)*(8+2)];
+
+	struct pl{
+	int where;
+	int piece_type;
+	} plist[2][16];
+
+	int Color;  //0R 1B 2Undefined
+	int dark_list[2][8]; //[color][chess_type] = the number of dark chess with chess_type and the color 
+	int num_pieces[2]; // number of revealed and alive pieces
+	bool can_eat_by_move[16][16];
+
 	int R_time;
 	int B_time;
 	MyAI my_interface;
+	int power_table[8];
+	int dark_position_list[60];
+	int dark_number;
+	void initBoardState();
+	void initCanEatList();
 	int find_jump(int from, int per_step, int turn); //return 0(cannot jump) or "to" position
 	// remove the ith piece of color
 	void remove_piece(int i, int color){
@@ -94,10 +100,12 @@ private:
 	}
 	char convertChessNoToChar(int index);
 	int convertCharToChessNo(char c);
-	void expandMoves(int capture_list[65], int move_list[65], int* capture_list_index, int* move_list_index);
+	void expandMoves(int capture_list[65], int move_list[65], int* capture_list_index, int* move_list_index, int turn);
 	int convertCharPositionToIndex(char alpha, char number);
 	void convertIndexToCharPosition(char from[3], char to[3], int index);
 	void copy_board_postion(int src, int dst);
 	void print_board();
-
+	int F4(int alpha, int beta, int depth, int turn, int* best_move);
+	void undoMove(int move_int_rep, int eaten);
+	int evaluateBoard(int turn);
 };
