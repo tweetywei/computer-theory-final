@@ -38,7 +38,7 @@ class MyAI
 		"ready",
 		"time_settings",
 		"time_left",
-  	"showboard"
+  		"showboard"
 	};
 public:
 	void generateMove(char move[6]);
