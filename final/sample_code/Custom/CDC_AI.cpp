@@ -3,7 +3,7 @@
 #define RIGHT +1
 #define DOWN +10
 #define UP -10
-
+#define CURRENT_DEPTH 6
 CDC_AI::CDC_AI(void){this->Color = 2;}
 
 CDC_AI::~CDC_AI(void){}
@@ -88,6 +88,7 @@ bool CDC_AI::genmove(const char* data[], char* response){
 	this->generateMove(move, Color);
 	sprintf(response, "%c%c %c%c", move[0], move[1], move[3], move[4]);
 	print_board();
+	print_alive(Color);
 	return 0;
 }
 
@@ -242,7 +243,7 @@ void CDC_AI::expandMoves(int capture_list[100], int move_list[100], int* capture
 			//printf("checking cannon motion...\n");
 			fflush(stdout);
 			for(int d = 0; d < 4; d++){
-				if(to = find_jump(from,move_dir[d],turn)){
+				if(to = (find_jump(from,move_dir[d],turn))){
 					//printf("cannon capture %d to %d\n", from, to);
 					fflush(stdout);
 					capture_list[(*capture_list_index)++] = (from * 100) + to;
@@ -310,7 +311,36 @@ int CDC_AI::evaluateBoard(int turn){
 
 	return total_power;
 }
-
+int CDC_AI::Star1_F3(int position, int alpha, int beta, int depth, int turn, int* best_move){
+	int vmax = power_table[K] + evaluateBoard(turn);
+	int M0 = vmax;
+	int A0 = dark_number * (alpha - vmax) + vmax;
+	int vmin = evaluateBoard(turn) - power_table[K] > 0;
+	int B0 = dark_number * (beta - vmin) + vmin;
+	int m0 = vmin;
+	int vsum = 0;
+	int next_best = 0;
+	for(int i = 0; i < 16; i++){
+		int flip_color = i / 8;
+		int flip_piece_type = i % 8;
+		if(i % 8 == 0)
+			continue;
+		if(dark_list[i / 8][i % 8] <= 0)
+			continue;
+		int piece_number = dark_list[flip_color][flip_piece_type];
+		MakeMove(position * 100 + (flip_color * 8 + flip_piece_type), 1);  //remember to deal with dark_list[turn][i] > 1
+		int t = F4((-1) * std::min(B0, vmax), (-1) * std::max(A0, vmin), depth - 1, (turn + 1)%2, &next_best);
+		undoMove(position * 100 + (flip_color * 8 + flip_piece_type), 0, 1);
+		m0 += (t * piece_number - vmin * piece_number) / dark_number;
+		M0 += (t * piece_number - vmax * piece_number) / dark_number;
+		if(t >= B0) return m0;
+		if(t <= A0) return M0;
+		vsum += piece_number * t;
+		A0 += piece_number * (vmax - t);
+		B0 += piece_number * (vmin - t);
+	}
+	return vsum / dark_number;
+}
 int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	//printf("calling F4, depth = %d, turn = %d\n", depth, turn);
 	if(depth <= 0)
@@ -320,7 +350,7 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	int capture_list_index = 0;
 	int move_list_index = 0;
 	expandMoves(capture_list, move_list, &capture_list_index, &move_list_index, turn);	
-	if(capture_list_index + move_list_index <= 0){
+	if(capture_list_index + move_list_index<= 0){
 		int score = evaluateBoard(turn);
 		//printf("return from F4, depth = %d, turn = %d, score = %d\n", depth, turn, score);
 		fflush(stdout);
@@ -338,10 +368,10 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 			try_move = capture_list[i];
 			eaten = board[try_move % 100].piece;
 		}
-		else{
+		else if(i < capture_list_index + move_list_index){
 			try_move = move_list[i - capture_list_index];
 		}
-		MakeMove(try_move);
+		MakeMove(try_move, 0);
 		//do move
 		int t = (-1) * F4((-1) * n, (-1) * std::max(alpha, m), depth - 1, (turn + 1) % 2, &next_best);
 		fflush(stdout);
@@ -357,7 +387,7 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 			//printf("get m = %d from move %d\n", m, try_move);
 			fflush(stdout);
 		}
-		undoMove(try_move, eaten);
+		undoMove(try_move, eaten, 0);
 		if(m >= beta){
 			//printf("return from F4, depth = %d, turn = %d, score = %d, a cut happens\n", depth, turn, m);
 			return m;
@@ -365,14 +395,28 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 		n = std::max(alpha, m) + 1;
 	}
 	//printf("return from F4, depth = %d, turn = %d, score = %d\n", depth, turn, m);
+	if(dark_number < 5){
+		for(int i = 0; i < dark_number; i++){
+			//flip chess
+			int flip_position = dark_position_list[i];
+			int t = Star1_F3(flip_position, alpha, beta, 2, turn, best_move);
+			if(t > m)
+				(*best_move) = flip_position*100 + flip_position;
+			if(m >= beta){
+				//printf("return from F4, depth = %d, turn = %d, score = %d, a cut happens\n", depth, turn, m);
+				return m;
+			}
+		n = std::max(alpha, m) + 1;
+		}
+	}
 	return m;
 }
 
 void CDC_AI::generateMove(char move[6], int turn){
 	int best_move = 0;
-	int return_F4 = F4(-2147483647, 2147483647, 6, turn, &best_move);
 	bool have_move = false;
-	fflush(stdout);
+	int return_F4 = F4(-2147483647, 2147483647, CURRENT_DEPTH, turn, &best_move);
+
 	if(best_move){ 
 		have_move = true;
 		fflush(stdout);
@@ -397,7 +441,26 @@ void CDC_AI::generateMove(char move[6], int turn){
 	return;
 }
 
-void CDC_AI::undoMove(int move_int_rep, int eaten){
+void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
+	if(is_flip){
+		int src = move_int_rep / 100;
+		int piece_color = (move_int_rep % 100) / 8;
+		int piece_type = (move_int_rep % 100) % 8;
+
+		//printf("undo flip (%d,%d) = %d\n", src, src, move_int_rep % 100);
+		this->board[src].piece = CLOSE;
+		this->board[src].dark = true;
+		this->board[src].color = 2;
+		dark_list[piece_color][piece_type] += 1;
+		for(int i = 0; i < num_pieces[piece_color]; i++){
+			if(plist[piece_color][i].piece_type == piece_type && plist[piece_color][i].where == src){
+				remove_piece(i, piece_color);
+				break;
+			}
+		}
+		dark_position_list[dark_number++] = src;
+		return;
+	}
 	int src = move_int_rep / 100;
 	int dst = move_int_rep % 100;
 	//printf("undo move: %d --> %d\n", dst, src);
@@ -425,6 +488,7 @@ void CDC_AI::undoMove(int move_int_rep, int eaten){
 		board[dst].empty = true;
 		board[dst].piece = EMPTY;
 	}
+	return;
 }
 
 void CDC_AI::MakeMove(const char move[6]){
@@ -437,12 +501,12 @@ void CDC_AI::MakeMove(const char move[6]){
 		this->board[src].piece = new_chess;
 		this->board[src].dark = false;
 		this->board[src].color = (new_chess > 8)? 1: 0;
-		printf("# call flip(): flip(%d,%d) = %d==========================\n",src, src, board[src].piece);
+		//printf("# call flip(): flip(%d,%d) = %d==========================\n",src, src, board[src].piece);
 		fflush(stdout);
 		char test_src[3];
 		char test_to[3];
 		convertIndexToCharPosition(test_src, test_src, src * 100 + src);
-		printf("# in char represenation, is %c%c\n", test_src[0], test_src[1]); 
+		//printf("# in char represenation, is %c%c\n", test_src[0], test_src[1]); 
 		dark_list[new_chess_color][piece_type] -= 1;  //remove revealed chess from dark chess list
 		plist[new_chess_color][num_pieces[new_chess_color]].piece_type = piece_type;  //add to plist
 		plist[new_chess_color][num_pieces[new_chess_color]].where = src;
@@ -488,7 +552,17 @@ void CDC_AI::MakeMove(const char move[6]){
 	//print_board();
 }
 
-void CDC_AI::MakeMove(int move_int_rep){
+void CDC_AI::MakeMove(int move_int_rep, int is_flip){
+	if(is_flip){
+		char from[3];
+		char to[3];
+		int flip_index = (move_int_rep / 100) * 100 + (move_int_rep / 100);
+		convertIndexToCharPosition(from, to, flip_index);
+		char move[6];
+		sprintf(move, "%c%c(%c)", from[0], from[1], convertChessNoToChar(move_int_rep % 100));
+		MakeMove(move);
+		return;
+	}
 	char from[3];
 	char to[3];
 	convertIndexToCharPosition(from, to, move_int_rep);
@@ -515,4 +589,12 @@ void CDC_AI::print_board(){
 	printf("  a b c d\n");
 	fflush(stdout);
 	return;
+}
+
+void CDC_AI::print_alive(int turn){
+	printf("=====print alive pieces=========\n");
+	for(int i = 0; i < num_pieces[turn]; i++){
+		printf("%d at %d; ", plist[turn][i].piece_type, plist[turn][i].where);
+	}
+	printf("================================\n");
 }

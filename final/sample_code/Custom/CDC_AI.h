@@ -44,7 +44,7 @@ public:
 
 	void generateMove(char move[6], int turn);
 	void MakeMove(const char move[6]);
-	void MakeMove(int move_int_rep);
+	void MakeMove(int move_int_rep, int is_flip);
 
 private:
 	struct n_b{
@@ -106,6 +106,9 @@ private:
 	void copy_board_postion(int src, int dst);
 	void print_board();
 	int F4(int alpha, int beta, int depth, int turn, int* best_move);
-	void undoMove(int move_int_rep, int eaten);
+	void undoMove(int move_int_rep, int eaten, int is_flip);
+	int Star1_F3(int position, int alpha, int beta, int depth, int turn, int* best_move);
 	int evaluateBoard(int turn);
+	void print_alive(int turn);
+
 };
