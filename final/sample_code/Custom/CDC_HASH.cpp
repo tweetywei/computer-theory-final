@@ -53,5 +53,5 @@ unsigned long long CDC_HASH::getRandomRepresentation(char piece, int position){
 	int column = position % 10;
 	if(row - 1 > 3 || column - 1 > 7)
 		printf("Oooooooops randomBitsTable index fault, want to get position %d?\n", position);
-	return randomBitsTable[piece][(row - 1) * (column - 1)];
+	return randomBitsTable[piece][(row - 1) * 8 + (column - 1)];
 }

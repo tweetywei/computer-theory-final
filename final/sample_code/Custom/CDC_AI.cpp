@@ -366,7 +366,7 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	if(my_hash.findHashHit(current_hash, &hash_m, &hash_record, &hash_d, &hash_flag, turn)){
 		//check flag
 		if(is_legal_by_move(hash_record / 100, hash_record % 100, turn)){
-			printf("ohoh I find hit!!!\n");
+			printf("ohoh find hash!!!\n");
 			m = hash_m;
 			(*best_move) = hash_record;
 		}
