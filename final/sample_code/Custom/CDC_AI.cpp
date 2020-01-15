@@ -351,6 +351,23 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	int move_list[100];
 	int capture_list_index = 0;
 	int move_list_index = 0;
+
+	int hash_m;
+	int hash_record;
+	int hash_d;
+	char hash_flag;
+
+	int m = -2147483647;
+	int n = beta;
+	if(my_hash.findHashHit(current_hash, &hash_m, &hash_record, &hash_d, &hash_flag, turn)){
+		//check flag
+		if(is_legal_by_move(hash_record / 100, hash_record % 100, turn)){
+			printf("ohoh get hash!!\n");
+			m = hash_m;
+			(*best_move) = hash_record;
+		}
+	}
+
 	expandMoves(capture_list, move_list, &capture_list_index, &move_list_index, turn);	
 	if(capture_list_index + move_list_index<= 0){
 		int score = evaluateBoard(turn);
@@ -361,8 +378,7 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	//printf("get return from evaluating...\n");
 	fflush(stdout);
 	int next_best;
-	int m = -2147483647;
-	int n = beta;
+
 	for(int i = 0; i < capture_list_index + move_list_index; i++){
 		int eaten = 0;
 		int try_move;
@@ -392,6 +408,8 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 		undoMove(try_move, eaten, 0);
 		if(m >= beta){
 			//printf("return from F4, depth = %d, turn = %d, score = %d, a cut happens\n", depth, turn, m);
+			char flag = 2;
+			my_hash.updateHash(current_hash, m, depth, (*best_move), flag, turn);
 			return m;
 		}
 		n = std::max(alpha, m) + 1;
@@ -406,10 +424,20 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 				(*best_move) = flip_position*100 + flip_position;
 			if(m >= beta){
 				//printf("return from F4, depth = %d, turn = %d, score = %d, a cut happens\n", depth, turn, m);
+				char flag = 2;
+				my_hash.updateHash(current_hash, m, depth, (*best_move), flag, turn);
 				return m;
 			}
 		n = std::max(alpha, m) + 1;
 		}
+	}
+
+	if(m >= alpha){
+		char flag = 1;
+		my_hash.updateHash(current_hash, m, depth, (*best_move), flag, turn);
+	}else{
+		char flag = 4;
+		my_hash.updateHash(current_hash, m, depth, (*best_move), flag, turn);
 	}
 	return m;
 }
