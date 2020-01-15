@@ -164,6 +164,8 @@ void CDC_AI::initBoardState ()
 	power_table[K]  = 486;
 	power_table[C]  = 100;
 	//this->Pirnf_Chessboard();
+	my_hash.initRandomBits();
+	current_hash = 0;
 	print_board();
 }
 
@@ -444,13 +446,15 @@ void CDC_AI::generateMove(char move[6], int turn){
 void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 	if(is_flip){
 		int src = move_int_rep / 100;
+		char flip_piece = (move_int_rep % 100); 
 		int piece_color = (move_int_rep % 100) / 8;
 		int piece_type = (move_int_rep % 100) % 8;
-
+		current_hash ^= my_hash.getRandomRepresentation(flip_piece, src);
 		//printf("undo flip (%d,%d) = %d\n", src, src, move_int_rep % 100);
 		this->board[src].piece = CLOSE;
 		this->board[src].dark = true;
 		this->board[src].color = 2;
+
 		dark_list[piece_color][piece_type] += 1;
 		for(int i = 0; i < num_pieces[piece_color]; i++){
 			if(plist[piece_color][i].piece_type == piece_type && plist[piece_color][i].where == src){
@@ -467,7 +471,9 @@ void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 	fflush(stdout);
 	int move_color = board[dst].color;
 	int move_piece_type = board[dst].piece % 8;
+	char move_piece = board[dst].piece;
 	copy_board_postion(dst, src);
+	current_hash ^= my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, dst);
 
 	for(int i = 0; i < num_pieces[move_color]; i++){
 		if(move_piece_type == plist[move_color][i].piece_type && dst == plist[move_color][i].where){
@@ -483,6 +489,7 @@ void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 		board[dst].piece = eaten;
 		board[dst].empty = false;
 		board[dst].color = eaten_color;
+		current_hash ^= my_hash.getRandomRepresentation(eaten, dst);
 	}
 	else{
 		board[dst].empty = true;
@@ -518,6 +525,7 @@ void CDC_AI::MakeMove(const char move[6]){
 				break;
 			}
 		}
+		current_hash ^= my_hash.getRandomRepresentation((char)new_chess, src);
 	}
 	else{
 		//printf("# Search call move(): move : %d-%d \n",src,dst); 
@@ -536,15 +544,19 @@ void CDC_AI::MakeMove(const char move[6]){
 		if(!board[dst].empty){  //remove from plist
 			int captured_color = board[dst].color;
 			int piece_type = board[dst].piece % 8;
+			char capture_piece = board[dst].piece;
+			current_hash ^= my_hash.getRandomRepresentation(capture_piece, dst);
 			for(int i = 0; i < num_pieces[captured_color]; i++){
 				if(piece_type == plist[captured_color][i].piece_type && dst == plist[captured_color][i].where){
 					//printf("plist: remove plist[%d][%d] which is at %d\n", captured_color, i, dst);
 					fflush(stdout);
 					remove_piece(i, captured_color);
+					break;
 				}
 			}
 		}
-
+		char move_piece = board[src].piece;
+		current_hash ^= my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, src);
 		copy_board_postion(src, dst);
 		board[src].empty = true;
 		board[src].piece = EMPTY;

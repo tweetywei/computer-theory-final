@@ -5,6 +5,7 @@
 #include <time.h>
 #include <algorithm>
 #include "MyAI.h"
+#include "CDC_HASH.h"
 class CDC_AI
 {
 	enum { 
@@ -20,7 +21,18 @@ class CDC_AI
 public:
 	CDC_AI(void);
 	~CDC_AI(void);
+	struct n_b{
+		bool inside; // 1 if in the board
+		bool empty; // whether it is empty
+		bool dark; // whether it is dark
+		int color; // 0 or 1
+		char piece;
+	} board[(4+2)*(8+2)];
 
+	struct pl{
+	int where;
+	int piece_type;
+	} plist[2][16];
 
 	// commands
 	bool protocol_version(const char* data[], char* response);// 0
@@ -47,19 +59,6 @@ public:
 	void MakeMove(int move_int_rep, int is_flip);
 
 private:
-	struct n_b{
-	bool inside; // 1 if in the board
-	bool empty; // whether it is empty
-	bool dark; // whether it is dark
-	int color; // 0 or 1
-	char piece;
-	} board[(4+2)*(8+2)];
-
-	struct pl{
-	int where;
-	int piece_type;
-	} plist[2][16];
-
 	int Color;  //0R 1B 2Undefined
 	int dark_list[2][8]; //[color][chess_type] = the number of dark chess with chess_type and the color 
 	int num_pieces[2]; // number of revealed and alive pieces
@@ -67,7 +66,9 @@ private:
 
 	int R_time;
 	int B_time;
+	unsigned long long current_hash;
 	MyAI my_interface;
+	CDC_HASH my_hash;
 	int power_table[8];
 	int dark_position_list[60];
 	int dark_number;
