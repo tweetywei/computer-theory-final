@@ -54,6 +54,8 @@ int main(){
   CDC_AI myai;
   do{
     // read command
+    fprintf(stderr, "waiting for new command\n");
+    fflush(stderr);
     fgets(read, 1024, stdin);
     fprintf(stderr, "%s", read);
     fflush(stderr);
