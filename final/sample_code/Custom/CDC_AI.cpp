@@ -166,6 +166,10 @@ void CDC_AI::initBoardState ()
 	//this->Pirnf_Chessboard();
 	my_hash.initRandomBits();
 	current_hash = 0;
+	for(int i = 0; i < 60; i++){
+		if(is_inside(i))
+			current_hash ^= my_hash.getRandomRepresentation(CLOSE, i);
+	}
 	print_board();
 }
 
@@ -362,7 +366,7 @@ int CDC_AI::F4(int alpha, int beta, int depth, int turn, int* best_move){
 	if(my_hash.findHashHit(current_hash, &hash_m, &hash_record, &hash_d, &hash_flag, turn)){
 		//check flag
 		if(is_legal_by_move(hash_record / 100, hash_record % 100, turn)){
-			printf("ohoh get hash!!\n");
+			printf("ohoh I find hit!!!\n");
 			m = hash_m;
 			(*best_move) = hash_record;
 		}
@@ -477,7 +481,7 @@ void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 		char flip_piece = (move_int_rep % 100); 
 		int piece_color = (move_int_rep % 100) / 8;
 		int piece_type = (move_int_rep % 100) % 8;
-		current_hash ^= my_hash.getRandomRepresentation(flip_piece, src);
+		current_hash ^= my_hash.getRandomRepresentation(flip_piece, src) ^ my_hash.getRandomRepresentation(CLOSE, src);
 		//printf("undo flip (%d,%d) = %d\n", src, src, move_int_rep % 100);
 		this->board[src].piece = CLOSE;
 		this->board[src].dark = true;
@@ -501,7 +505,7 @@ void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 	int move_piece_type = board[dst].piece % 8;
 	char move_piece = board[dst].piece;
 	copy_board_postion(dst, src);
-	current_hash ^= my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, dst);
+	current_hash ^= my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, dst) ^ my_hash.getRandomRepresentation(EMPTY, src);
 
 	for(int i = 0; i < num_pieces[move_color]; i++){
 		if(move_piece_type == plist[move_color][i].piece_type && dst == plist[move_color][i].where){
@@ -522,6 +526,7 @@ void CDC_AI::undoMove(int move_int_rep, int eaten, int is_flip){
 	else{
 		board[dst].empty = true;
 		board[dst].piece = EMPTY;
+		current_hash ^= my_hash.getRandomRepresentation(EMPTY, dst);
 	}
 	return;
 }
@@ -553,7 +558,7 @@ void CDC_AI::MakeMove(const char move[6]){
 				break;
 			}
 		}
-		current_hash ^= my_hash.getRandomRepresentation((char)new_chess, src);
+		current_hash ^= my_hash.getRandomRepresentation((char)new_chess, src) ^ my_hash.getRandomRepresentation(CLOSE, src);
 	}
 	else{
 		//printf("# Search call move(): move : %d-%d \n",src,dst); 
@@ -582,9 +587,13 @@ void CDC_AI::MakeMove(const char move[6]){
 					break;
 				}
 			}
-		}
+		}else
+			current_hash ^= my_hash.getRandomRepresentation(EMPTY, dst);
+
 		char move_piece = board[src].piece;
-		current_hash ^= my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, src);
+		//move to dsts
+		current_hash ^= my_hash.getRandomRepresentation(EMPTY, src) ^ my_hash.getRandomRepresentation(move_piece, src) ^ my_hash.getRandomRepresentation(move_piece, src);
+		
 		copy_board_postion(src, dst);
 		board[src].empty = true;
 		board[src].piece = EMPTY;

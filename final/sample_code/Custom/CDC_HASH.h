@@ -20,7 +20,6 @@ class CDC_HASH
 		bool findHashHit(unsigned long long key, int* m, int* record_move, int* depth, char* flag, int turn);
 		unsigned long long getRandomRepresentation(char piece, int position);
 	private:
-
 		h_node nodes[2][32769];  //2**15 = 32768
 		unsigned long long randomBitsTable[16][32];
 
